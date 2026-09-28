@@ -728,3 +728,92 @@ Total: 3 (UNKNOWN: 0, LOW: 0, MEDIUM: 1, HIGH: 2, CRITICAL: 0)
 │            │ CVE-2026-59890      │ MEDIUM   │        │                   │ 83.0.0        │ setuptools: setuptools: MANIFEST.in exclusion bypass in │
 │            │                     │          │        │                   │               │ sdist via Unicode normalization collision (NFC/NFD)...  │
 │            │                     │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2026-59890              │
+
+
+
+
+Décisions du Dockerfile
+-----------------------
++ FROM python:3.13-slim car cela allège l'image
++ COPY requirements.txt cela permet de stocker la version de python
++ RUN pip install --no-cache-dir ... permet de ne pas garder le cache ce qui allège l'image
++ RUN useradd -u 10001 christopher création d'un utilisateur avec un uid
++ COPY --from=builder /install récupération des paquets installés dans le premier stage de l'image
+
+
+Résultats multi-étapes
+----------------------
+devops-info-service   lab02         197MB   (une seule étape)
+devops-info-service   lab02-multi   183MB   (multi-étapes)
+
+l'image multi-étapes est légèrement moins lourde que la mono-étape mais à part ça le changement n'est pas si grand que ça
+
+
+Analyse Trivy
+-------------
+Total: 2 (HIGH: 2, CRITICAL: 0)
+
+┌────────────┬─────────────────────┬──────────┬────────┬───────────────────┬───────────────┬────────────────────────────────────────────────────────┐
+│  Library   │    Vulnerability    │ Severity │ Status │ Installed Version │ Fixed Version │                       Title                          │
+├────────────┼─────────────────────┼──────────┼────────┼───────────────────┼───────────────┼────────────────────────────────────────────────────────┤
+│ msgpack    │ GHSA-6v7p-g79w-8964 │ HIGH     │ fixed  │ 1.1.2             │ 1.2.1         │ MessagePack for Python: Out-of-bounds read / crash on  │
+│            │                     │          │        │                   │               │ Unpacker reuse after a...                              │
+│            │                     │          │        │                   │               │ https://github.com/advisories/GHSA-6v7p-g79w-8964      │
+├────────────┼─────────────────────┤          │        ├───────────────────┼───────────────┼────────────────────────────────────────────────────────┤
+│ setuptools │ CVE-2025-47273      │          │        │ 70.3.0            │ 78.1.1        │ setuptools: Path Traversal Vulnerability in setuptools │
+│            │                     │          │        │                   │               │ PackageIndex                                           │
+│            │                     │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2025-47273             │
+└────────────┴─────────────────────┴──────────┴────────┴───────────────────┴───────────────┴────────────────────────────────────────────────────────┘
+
+chris@Christok-PC:~/projects/DevOps-Core-Course/app_python$   echo $?
+1
+
+
+
+Preuve de travail
+-----------------
+1. docker pull
+--------------
+chris@Christok-PC:~/projects/DevOps-Core-Course/app_python$ docker logout ghcr.io
+Removing login credentials for ghcr.io
+chris@Christok-PC:~/projects/DevOps-Core-Course/app_python$ docker rmi ghcr.io/christ-ok/devops-info-service:1.0.0
+Untagged: ghcr.io/christ-ok/devops-info-service:1.0.0
+Deleted: sha256:76785edad9923f2cd83008d31b83f603204d31cc19d3f0ad2d75506ce3a28b0e
+chris@Christok-PC:~/projects/DevOps-Core-Course/app_python$ docker pull ghcr.io/christ-ok/devops-info-service:1.0.0
+1.0.0: Pulling from christ-ok/devops-info-service
+b19aec290dba: Pull complete 
+bc42dcc70ffa: Pull complete 
+ebde01002665: Pull complete 
+6ff4043a00f7: Pull complete 
+Digest: sha256:76785edad9923f2cd83008d31b83f603204d31cc19d3f0ad2d75506ce3a28b0e
+Status: Downloaded newer image for ghcr.io/christ-ok/devops-info-service:1.0.0
+ghcr.io/christ-ok/devops-info-service:1.0.0
+
+
+
+2. docker push
+--------------
+chris@Christok-PC:~/projects/DevOps-Core-Course/app_python$ echo -n "$GHCR_PAT" | wc -c
+40
+chris@Christok-PC:~/projects/DevOps-Core-Course/app_python$ echo "$GHCR_PAT" | docker login ghcr.io -u Christ-ok --password-stdin
+Login Succeeded
+chris@Christok-PC:~/projects/DevOps-Core-Course/app_python$ docker push ghcr.io/christ-ok/devops-info-service:1.0.0
+The push refers to repository [ghcr.io/christ-ok/devops-info-service]
+b19aec290dba: Layer already exists 
+264ba3d8ae19: Layer already exists 
+bc42dcc70ffa: Layer already exists 
+6ff4043a00f7: Layer already exists 
+ebde01002665: Layer already exists 
+6b37362b3da7: Layer already exists 
+4a43a40b039e: Layer already exists 
+3d9fb7471420: Layer already exists 
+1.0.0: digest: sha256:5c2b1fbe53a204e771ba3f1f0fe071afba3188cb3d40308cc6768329fe5af7fb size: 1812
+
+i Info → Not all multiplatform-content is present and only the available single-platform image was pushed
+         sha256:76785edad9923f2cd83008d31b83f603204d31cc19d3f0ad2d75506ce3a28b0e -> sha256:5c2b1fbe53a204e771ba3f1f0fe071afba3188cb3d40308cc6768329fe5af7fb
+
+
+3. URL du registre
+------------------
+- Paquet : https://github.com/users/Christ-ok/packages/container/package/devops-info-service
+- Pull : `docker pull ghcr.io/christ-ok/devops-info-service:1.0.0`
