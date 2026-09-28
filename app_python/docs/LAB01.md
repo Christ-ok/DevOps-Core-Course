@@ -256,3 +256,11 @@ Un autre point vérifié pendant le laboratoire a été la configuration dynamiq
 La communauté GitHub constitue une ressource importante pour progresser sur les technologies utilisées dans le développement et le DevOps. Les dépôts open source permettent notamment de consulter de la documentation, d'étudier différentes implémentations, de suivre les problèmes rencontrés par d'autres développeurs et de comparer les bonnes pratiques utilisées dans des projets réels.
 
 Dans le cadre de ce laboratoire, GitHub permet également de conserver les travaux réalisés, de documenter les choix techniques et de rendre les exercices reproductibles. L'utilisation de Git et GitHub fait ainsi partie intégrante de la démarche DevOps en facilitant le suivi des modifications et le partage du travail.
+
+
+
+Docker
+------
+1. docker build -t devops-info-service:lab02-mutli app_python/
+2. docker run -d --name devops-info -p 5000:5000 devops-info-service:lab02-multi
+3. docker pull ghcr.io/christ-ok/devops-info-service:1.0.0
